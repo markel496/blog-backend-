@@ -10,10 +10,11 @@ import {
 import { checkAuth, handleValidationErrors } from './utils/index.js'
 import { UserController, PostController } from './controllers/index.js'
 
+// 'mongodb+srv://jonysmoker:c6RjiVuNh6BCu950@cluster0.8r0zj1n.mongodb.net/blog?retryWrites=true&w=majority'
+//blog вписал я. Это говорит о том, что нужно подключиться не к самому серверу, а к нужной бд
+
 mongoose
-  .connect(
-    'mongodb+srv://jonysmoker:c6RjiVuNh6BCu950@cluster0.8r0zj1n.mongodb.net/blog?retryWrites=true&w=majority'
-  ) //blog вписал я. Это говорит о том, что нужно подключиться не к самому серверу, а к нужной бд
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log('DB ok'))
   .catch((err) => console.log('DB error', err))
 
@@ -98,7 +99,7 @@ app.delete('/posts/:id', checkAuth, PostController.remove)
 //Получение последних 5 тегов
 app.get('/tags', PostController.getLastTags)
 
-app.listen(PORT, (err) => {
+app.listen(process.env.PORT || PORT, (err) => {
   if (err) {
     //Если сервер не смог запуститься - возвращаем сообщение об этом
     return console.log(err)
