@@ -2,6 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import mongoose from 'mongoose'
 import cors from 'cors'
+import fs from 'fs'
 import {
   registerValidation,
   loginValidation,
@@ -26,6 +27,10 @@ const app = express() //Создал express приложение. Вся лог
 const storage = multer.diskStorage({
   // сохраняю загруженные файлы в папку uploads
   destination: (_, __, cb) => {
+    //Если fs не нашел папку uploads - он ее создаст
+    if (!fs.existsSync('uploads')) {
+      fs.mkdirSync('uploads')
+    }
     cb(null, 'uploads')
   },
   // определяю имя файла перед сохранением
