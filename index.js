@@ -6,7 +6,7 @@ import fs from 'fs'
 import {
   registerValidation,
   loginValidation,
-  postCreateValidation,
+  postCreateValidation
 } from './validations.js'
 import { checkAuth, handleValidationErrors } from './utils/index.js'
 import { UserController, PostController } from './controllers/index.js'
@@ -15,7 +15,9 @@ import { UserController, PostController } from './controllers/index.js'
 //blog вписал я. Это говорит о том, что нужно подключиться не к самому серверу, а к нужной бд
 
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(
+    'mongodb+srv://jonysmoker:c6RjiVuNh6BCu950@cluster0.8r0zj1n.mongodb.net/blog?retryWrites=true&w=majority'
+  )
   .then(() => console.log('DB ok'))
   .catch((err) => console.log('DB error', err))
 
@@ -36,7 +38,7 @@ const storage = multer.diskStorage({
   // определяю имя файла перед сохранением
   filename: (_, file, cb) => {
     cb(null, file.originalname)
-  },
+  }
 })
 
 //Создаю хранилище / функцию, которая будет позволять использовать multer
@@ -51,7 +53,7 @@ app.use('/uploads', express.static('uploads')) //Позволит обработ
 //Загрузка картинки на сервер. В случае успешной загрузки, в ответе - ссылка на загруженную картинку
 app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
   res.json({
-    url: `/uploads/${req.file.originalname}`,
+    url: `/uploads/${req.file.originalname}`
   })
 })
 
@@ -75,7 +77,8 @@ app.post(
 app.get('/auth/me', checkAuth, UserController.getMe)
 
 //Получение всех статей
-app.get('/posts', PostController.getAll)
+app.get('/posts', PostController.getAll) //сортировка по дате
+app.get('/populate', PostController.getPopulate) //сортировка по просмотрам
 
 // Получение одной статьи
 app.get('/posts/:id', PostController.getOne)
@@ -103,6 +106,9 @@ app.delete('/posts/:id', checkAuth, PostController.remove)
 
 //Получение последних 5 тегов
 app.get('/tags', PostController.getLastTags)
+
+//Получение постов по тегу
+app.get('/posts/tags/:name', PostController.getPostsByTag)
 
 app.listen(process.env.PORT || PORT, (err) => {
   if (err) {
