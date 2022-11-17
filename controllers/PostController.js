@@ -2,20 +2,13 @@ import PostModel from '../models/Post.js'
 
 export const getAll = async (req, res) => {
   try {
-    // Получаю все статьи из бд. Благодаря .populate('user').exec() в поле user находится не id, а полная инфа
+    // Получаю все статьи из бд. Благодаря .populate('user') в поле user находится не id, а полная инфа
     const posts = await PostModel.find()
       .sort({ createdAt: 'desc' })
-      .populate('user')
+      .populate('user', { passwordHash: 0 })
       .exec()
 
-    const copyPosts = JSON.parse(JSON.stringify(posts))
-
-    copyPosts.map((p) => {
-      delete p.user.passwordHash
-      return p
-    })
-
-    res.json(copyPosts)
+    res.json(posts)
   } catch (e) {
     console.log(e)
     res.status(500).json({
@@ -28,17 +21,10 @@ export const getPopulate = async (req, res) => {
   try {
     const posts = await PostModel.find()
       .sort({ viewsCount: 'desc' })
-      .populate('user')
+      .populate('user', { passwordHash: 0 })
       .exec()
 
-    const copyPosts = JSON.parse(JSON.stringify(posts))
-
-    copyPosts.map((p) => {
-      delete p.user.passwordHash
-      return p
-    })
-
-    res.json(copyPosts)
+    res.json(posts)
   } catch (e) {
     console.log(e)
     res.status(500).json({
@@ -77,7 +63,9 @@ export const getOne = (req, res) => {
         }
         res.json(doc)
       }
-    ).populate('user')
+    ).populate('user', {
+      passwordHash: 0
+    })
   } catch (e) {
     console.log(e)
     return res.status(500).json({
@@ -177,12 +165,14 @@ export const update = async (req, res) => {
 
 export const getLastTags = async (req, res) => {
   try {
-    const posts = await PostModel.find().limit(5).exec() // Получаю последние 5 статей
+    const posts = await PostModel.find({ tags: { $ne: [''] } })
+      .sort({ createdAt: 'desc' })
+      .limit(5)
+      .exec() // Получаю последние 5 статей
 
     const tags = posts
-      .map((post) => post.tags)
-      .flat() //Объединяет массивы
-      .reverse()
+      .map((post) => post.tags[0] && post.tags[0])
+      // .flat() //Объединяет массивы
       .slice(0, 5)
 
     res.json(tags)
@@ -215,7 +205,7 @@ export const getPostsByTag = async (req, res) => {
         }
         res.json(doc)
       }
-    )
+    ).populate('user', { passwordHash: 0 })
   } catch (e) {
     console.log(e)
     return res.status(500).json({

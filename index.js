@@ -6,10 +6,15 @@ import fs from 'fs'
 import {
   registerValidation,
   loginValidation,
-  postCreateValidation
+  postCreateValidation,
+  commentUpdateValidation
 } from './validations.js'
 import { checkAuth, handleValidationErrors } from './utils/index.js'
-import { UserController, PostController } from './controllers/index.js'
+import {
+  UserController,
+  PostController,
+  CommentController
+} from './controllers/index.js'
 
 // 'mongodb+srv://jonysmoker:c6RjiVuNh6BCu950@cluster0.8r0zj1n.mongodb.net/blog?retryWrites=true&w=majority'
 //blog вписал я. Это говорит о том, что нужно подключиться не к самому серверу, а к нужной бд
@@ -55,6 +60,17 @@ app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
   res.json({
     url: `/uploads/${req.file.originalname}`
   })
+})
+
+//Удаление картинки из папки uploads
+app.delete('/uploads/:name', function (req, res) {
+  try {
+    fs.unlinkSync(`uploads/${req.params.name}`)
+    return res.status(200).send('Successfully! Image has been deleted')
+  } catch (err) {
+    // handle the error
+    return res.status(400).send(err)
+  }
 })
 
 // Авторизация
@@ -109,6 +125,30 @@ app.get('/tags', PostController.getLastTags)
 
 //Получение постов по тегу
 app.get('/posts/tags/:name', PostController.getPostsByTag)
+
+//Добавление комментария
+app.post('/comments', checkAuth, CommentController.addComment)
+
+//Получение последних 10 комментариев
+app.get('/comments', CommentController.getLastComments)
+
+//Получение комментариев к посту
+app.get('/comments/:postId', CommentController.getCommentsOnThePost)
+
+//получение комментариев по тегу
+app.get('/comments/tag/:name', CommentController.getCommentsByTag)
+
+//Удаление комментария
+app.delete('/comments/:id', checkAuth, CommentController.remove)
+
+//Редактирование комментария
+app.patch(
+  '/comments/:id',
+  checkAuth,
+  commentUpdateValidation,
+  handleValidationErrors,
+  CommentController.edit
+)
 
 app.listen(process.env.PORT || PORT, (err) => {
   if (err) {

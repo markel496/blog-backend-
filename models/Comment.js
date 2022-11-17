@@ -1,31 +1,19 @@
 import mongoose from 'mongoose'
 
-const PostSchema = new mongoose.Schema(
+const CommentSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true
-    },
     text: {
       type: String,
       required: true
     },
-    tags: {
-      type: Array,
-      default: []
-    },
-    imageUrl: String,
-    viewsCount: {
-      type: Number,
-      default: 0
-    },
-    commentsCount: {
-      type: Number,
-      default: 0
-    },
-    user: {
+    autor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User', // Ссылается на отдельную модель User с помощью ObjectId. Создается связь между двумя таблицами
+      required: true
+    },
+    post: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post',
       required: true
     }
   },
@@ -34,4 +22,4 @@ const PostSchema = new mongoose.Schema(
   }
 )
 
-export default mongoose.model('Post', PostSchema)
+export default mongoose.model('Comment', CommentSchema)

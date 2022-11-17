@@ -10,7 +10,6 @@ export default (req, res, next) => {
     try {
       //Расшифровка токена по ключу
       const decoded = jwt.verify(token, 'hola420')
-
       req.userId = decoded._id
       next() // все ок, можно выполнять следующие функции
     } catch (e) {
