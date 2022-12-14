@@ -16,29 +16,36 @@ import {
   CommentController
 } from './controllers/index.js'
 
-// 'mongodb+srv://jonysmoker:c6RjiVuNh6BCu950@cluster0.8r0zj1n.mongodb.net/blog?retryWrites=true&w=majority'
-//blog вписал я. Это говорит о том, что нужно подключиться не к самому серверу, а к нужной бд
+const MONGODB_URI =
+  process.env.MONGODB_URI ||
+  'mongodb+srv://jonysmoker:c6RjiVuNh6BCu950@cluster0.8r0zj1n.mongodb.net/blog?retryWrites=true&w=majority'
+
+const PORT = process.env.PORT || 4200
 
 mongoose
-  .connect(
-    'mongodb+srv://jonysmoker:c6RjiVuNh6BCu950@cluster0.8r0zj1n.mongodb.net/blog?retryWrites=true&w=majority'
-  )
+  .connect(MONGODB_URI)
   .then(() => console.log('DB ok'))
   .catch((err) => console.log('DB error', err))
-
-const PORT = 4200
 
 const app = express() //Создал express приложение. Вся логика express хранится в app
 
 //Создаю хранилище для картинок
 const storage = multer.diskStorage({
   // сохраняю загруженные файлы в папку uploads
-  destination: (_, __, cb) => {
+  destination: (req, __, cb) => {
     //Если fs не нашел папку uploads - он ее создаст
     if (!fs.existsSync('uploads')) {
       fs.mkdirSync('uploads')
     }
-    cb(null, 'uploads')
+
+    if (req.url === '/upload/avatar') {
+      if (!fs.existsSync('uploads/avatars')) {
+        fs.mkdirSync('uploads/avatars')
+      }
+      cb(null, 'uploads/avatars')
+    } else {
+      cb(null, 'uploads')
+    }
   },
   // определяю имя файла перед сохранением
   filename: (_, file, cb) => {
@@ -62,8 +69,26 @@ app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
   })
 })
 
+//Загрузка аватарки
+app.post('/upload/avatar', upload.single('image'), (req, res) => {
+  res.json({
+    url: `/uploads/avatars/${req.file.originalname}`
+  })
+})
+
+//Удаление аватарки
+app.delete('/uploads/avatars/:name', (req, res) => {
+  try {
+    fs.unlinkSync(`uploads/avatars/${req.params.name}`)
+    return res.status(200).send('Successfully! Avatar has been deleted')
+  } catch (err) {
+    // handle the error
+    return res.status(400).send(err)
+  }
+})
+
 //Удаление картинки из папки uploads
-app.delete('/uploads/:name', function (req, res) {
+app.delete('/uploads/:name', (req, res) => {
   try {
     fs.unlinkSync(`uploads/${req.params.name}`)
     return res.status(200).send('Successfully! Image has been deleted')
@@ -150,14 +175,10 @@ app.patch(
   CommentController.edit
 )
 
-app.listen(process.env.PORT || PORT, (err) => {
+app.listen(PORT, (err) => {
   if (err) {
     //Если сервер не смог запуститься - возвращаем сообщение об этом
     return console.log(err)
   }
   console.log('Server OK')
 })
-
-/** В переменной req хранится то, что прислал клиент, в res - что нужно передать клиенту
- *  4200 - порт, на который прикрепляем приложение
- */

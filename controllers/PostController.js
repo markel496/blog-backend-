@@ -1,4 +1,5 @@
 import PostModel from '../models/Post.js'
+import CommentModel from '../models/Comment.js'
 
 export const getAll = async (req, res) => {
   try {
@@ -125,6 +126,7 @@ export const remove = (req, res) => {
         })
       }
     )
+    CommentModel.deleteMany({ post: postId }).exec()
   } catch (e) {
     console.log(e)
     return res.status(500).json({
